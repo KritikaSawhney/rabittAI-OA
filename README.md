@@ -120,4 +120,4 @@ The `public/` folder can be deployed as static files to Vercel.
 
 ---
 
-Made with ❤️ for Rabbitt AI | PM Challenge 2024
+Made with ❤️ for Rabbitt.AI
