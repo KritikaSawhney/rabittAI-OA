@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Talking Rabbitt — AI Analytics</title>
+  <meta name="description" content="Talking Rabbitt: Conversational AI analytics. Upload your data, ask questions in plain English, and get instant insights with beautiful visualizations." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ── PARTICLES BACKGROUND ── -->
+<div id="particles"></div>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🐇</div>
+      <div class="logo-text">
+        <span class="logo-main">Talking Rabbitt</span>
+        <span class="logo-sub">AI Analytics</span>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge badge-live" id="statusBadge">● Ready</span>
+      <span class="badge badge-api" id="apiBadge">API: Demo</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN LAYOUT ── -->
+<main class="main-layout">
+
+  <!-- LEFT PANEL: Upload + Data Info -->
+  <aside class="panel panel-left">
+
+    <!-- Upload Zone -->
+    <div class="section-label">📂 Data Source</div>
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-inner" id="uploadInner">
+        <div class="upload-icon">📊</div>
+        <div class="upload-title">Drop your CSV here</div>
+        <div class="upload-sub">or click to browse</div>
+        <div class="upload-hint">Supports any sales, HR, or analytics CSV</div>
+        <input type="file" id="fileInput" accept=".csv" hidden />
+      </div>
+    </div>
+
+    <!-- Sample button -->
+    <button class="btn btn-secondary btn-full" id="loadSampleBtn">
+      ✨ Load Sample Sales Data
+    </button>
+
+    <!-- Data Summary Card -->
+    <div class="data-card" id="dataCard" style="display:none">
+      <div class="data-card-header">
+        <span class="data-card-icon">📋</span>
+        <span class="data-card-name" id="dataFileName">—</span>
+      </div>
+      <div class="data-stats">
+        <div class="stat-pill">
+          <span class="stat-num" id="statRows">—</span>
+          <span class="stat-label">Rows</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-num" id="statCols">—</span>
+          <span class="stat-label">Columns</span>
+        </div>
+      </div>
+      <div class="section-label" style="margin-top:12px;margin-bottom:6px;font-size:10px">COLUMNS</div>
+      <div class="columns-list" id="columnsList"></div>
+    </div>
+
+    <!-- Suggested Questions -->
+    <div class="section-label" style="margin-top:20px">💡 Try asking</div>
+    <div class="suggestions" id="suggestions">
+      <button class="suggestion-chip" data-q="Which region had the highest revenue?">Which region had the highest revenue?</button>
+      <button class="suggestion-chip" data-q="Show me total sales by product category">Total sales by product category</button>
+      <button class="suggestion-chip" data-q="What is the average order value?">What is the average order value?</button>
+      <button class="suggestion-chip" data-q="Which month had the most sales?">Which month had the most sales?</button>
+      <button class="suggestion-chip" data-q="Who are the top 5 customers by revenue?">Top 5 customers by revenue</button>
+      <button class="suggestion-chip" data-q="What is the overall trend in sales?">What is the overall sales trend?</button>
+    </div>
+  </aside>
+
+  <!-- CENTER PANEL: Chart -->
+  <section class="panel panel-center">
+    <div class="section-label">📈 Visualization</div>
+
+    <div class="chart-toolbar" id="chartToolbar" style="display:none">
+      <div class="chart-type-group">
+        <button class="chart-type-btn active" data-type="bar" title="Bar Chart">▊</button>
+        <button class="chart-type-btn" data-type="line" title="Line Chart">📈</button>
+        <button class="chart-type-btn" data-type="pie" title="Pie Chart">🥧</button>
+        <button class="chart-type-btn" data-type="doughnut" title="Doughnut Chart">🍩</button>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="downloadChartBtn">⬇ Export PNG</button>
+    </div>
+
+    <div class="chart-container" id="chartContainer">
+      <div class="chart-placeholder" id="chartPlaceholder">
+        <div class="placeholder-icon">📊</div>
+        <div class="placeholder-title">Waiting for data</div>
+        <div class="placeholder-sub">Upload a CSV to see instant visualizations</div>
+      </div>
+      <canvas id="mainChart" style="display:none"></canvas>
+    </div>
+
+    <!-- Chart Info -->
+    <div class="chart-meta" id="chartMeta" style="display:none">
+      <span class="chart-meta-title" id="chartMetaTitle">—</span>
+    </div>
+  </section>
+
+  <!-- RIGHT PANEL: Chat -->
+  <section class="panel panel-right">
+    <div class="section-label">💬 Conversation</div>
+
+    <div class="chat-window" id="chatWindow">
+      <div class="chat-message bot">
+        <div class="chat-avatar">🐇</div>
+        <div class="chat-bubble">
+          <strong>Hey, I'm Rabbitt!</strong><br/>
+          Upload a CSV file and start asking me questions about your data — in plain English. No formulas, no dashboards needed.
+          <br/><br/>
+          Try: <em>"Which product had the highest sales?"</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chat-input-row">
+        <input
+          type="text"
+          id="chatInput"
+          class="chat-input"
+          placeholder="Ask anything about your data..."
+          disabled
+        />
+        <button class="chat-send-btn" id="sendBtn" disabled>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+      <div class="chat-input-hint">Powered by GPT-3.5 ·&nbsp;<a href="#" id="apiKeyLink">Add API Key</a></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── API KEY MODAL ── -->
+<div class="modal-overlay" id="apiModal" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>🔑 OpenAI API Key</h2>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <p class="modal-body">
+      To get real AI-powered answers, add your OpenAI API key to the <code>.env</code> file on the server, or enter it below for this session:
+    </p>
+    <input type="password" id="apiKeyInput" class="modal-input" placeholder="sk-..." />
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="saveApiKey">Save for Session</button>
+      <button class="btn btn-ghost" id="modalCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── DATA TABLE MODAL ── -->
+<div class="modal-overlay" id="tableModal" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>📋 Data Preview</h2>
+      <button class="modal-close" id="tableModalClose">✕</button>
+    </div>
+    <div class="table-wrapper" id="tableWrapper"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
